@@ -165,7 +165,12 @@ router.get("/browse-files", (req, res) => {
 			return res.status(400).json({ message: "Directory required" });
 		}
 
-		const dirPath = join("./files", directory);
+		const filesDir = "./files";
+		const dirPath = join(filesDir, directory);
+
+		if (!dirPath.startsWith(filesDir)) {
+			return res.status(400).json({ message: "Invalid directory" });
+		}
 
 		if (existsSync(dirPath)) {
 			const files = readdirSync(dirPath);
@@ -203,7 +208,12 @@ router.get("/config/load", (req, res) => {
 			return res.status(400).json({ message: "Only JSON config files allowed" });
 		}
 
-		const configPath = join("./config", configFile);
+		const configDir = "./config";
+		const configPath = join(configDir, configFile);
+
+		if (!configPath.startsWith(configDir)) {
+			return res.status(400).json({ message: "Invalid file path" });
+		}
 
 		if (existsSync(configPath)) {
 			const config = readFileSync(configPath, 'utf8');
