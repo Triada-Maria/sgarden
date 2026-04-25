@@ -194,29 +194,36 @@ router.get("/config/load", (req, res) => {
 });
 
 router.post("/generate-custom-report", (req, res) => {
-	try {
-		const { templateString, data } = req.body;
+		try {
+			const { templateString, data } = req.body;
 
-		if (!templateString) {
-			return res.status(400).json({ message: "Template string required" });
+			if (!templateString) {
+				return res.status(400).json({ message: "Template string required" });
+			}
+
+			const reportData = data || {
+				username: "Unknown",
+				date: new Date().toLocaleDateString(),
+				totalUsers: 100
+			};
+
+			const safeReplace = (str, obj) => {
+				return str.replace(/\$\{([^}]+)\}/g, (_, key) => {
+					const value = obj[key];
+					return value !== undefined ? String(value) : '';
+				});
+			};
+
+			const report = safeReplace(templateString, reportData);
+
+			return res.json({ 
+				success: true, 
+				report,
+				generatedAt: new Date()
+			});
+		} catch (error) {
+			return res.status(500).json({ message: "Report generation failed" });
 		}
-
-		const reportData = data || {
-			username: "Unknown",
-			date: new Date().toLocaleDateString(),
-			totalUsers: 100
-		};
-
-		const report = eval(`\`${templateString}\``);
-
-		return res.json({ 
-			success: true, 
-			report,
-			generatedAt: new Date()
-		});
-	} catch (error) {
-		return res.status(500).json({ message: "Report generation failed" });
-	}
-});
+	});
 
 export default router;
