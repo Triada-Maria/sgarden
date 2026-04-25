@@ -67,7 +67,6 @@ router.post("/createUserInvited",
 				message: "User created successfully",
 			});
 
-			await Invitation.deleteOne({ token });
 		} catch (error) {
 			return next(error);
 		}
