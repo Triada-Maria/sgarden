@@ -55,6 +55,12 @@ router.post("/",
 router.post("/delete", async (req, res) => {
 	try {
 		const { id } = req.body;
+		const currentUser = res.locals.user;
+		
+		if (!currentUser || currentUser.role !== 'admin') {
+			return res.status(403).json({ message: "Admin access required" });
+		}
+		
 		const user = await User.findByIdAndDelete(id);
 		if (user) {
 			return res.json({ success: true });
@@ -69,6 +75,12 @@ router.post("/delete", async (req, res) => {
 router.post("/role", async (req, res) => {
 	try {
 		const { id, role } = req.body;
+		const currentUser = res.locals.user;
+		
+		if (!currentUser || currentUser.role !== 'admin') {
+			return res.status(403).json({ message: "Admin access required" });
+		}
+		
 		const user = await User.findByIdAndUpdate(id, { role });
 		if (user) {
 			return res.json({ success: true });
