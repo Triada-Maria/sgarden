@@ -48,12 +48,18 @@ router.get("/download-report", (req, res) => {
 			return res.status(400).json({ message: "Report name required" });
 		}
 
-		const reportPath = join("./reports", reportName);
+		const reportsDir = "./reports";
+		const reportPath = join(reportsDir, reportName);
+
+		if (!reportPath.startsWith(reportsDir)) {
+			return res.status(400).json({ message: "Invalid report name" });
+		}
 
 		if (existsSync(reportPath)) {
 			const content = readFileSync(reportPath);
 
-			res.setHeader('Content-Disposition', `attachment; filename="${reportName}"`);
+			const safeFilename = reportName.replace(/[\r\n]/g, "");
+			res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}"`);
 			return res.send(content);
 		}
 
@@ -71,10 +77,16 @@ router.get("/render-page", (req, res) => {
 			return res.status(400).json({ message: "Template name required" });
 		}
 
-		const templatePath = join("./templates", template);
+		const templatesDir = "./templates";
+		const templatePath = join(templatesDir, template);
+
+		if (!templatePath.startsWith(templatesDir)) {
+			return res.status(400).json({ message: "Invalid template name" });
+		}
 
 		if (existsSync(templatePath)) {
 			const templateContent = readFileSync(templatePath, 'utf8');
+			res.setHeader('Content-Type', 'text/plain');
 			return res.send(templateContent);
 		}
 
@@ -92,7 +104,13 @@ router.post("/upload-file", (req, res) => {
 			return res.status(400).json({ message: "Filename and content required" });
 		}
 
-		const uploadPath = join(destination || "./uploads", filename);
+		const uploadsDir = "./uploads";
+		const baseDir = destination || uploadsDir;
+		const uploadPath = join(baseDir, filename);
+
+		if (!uploadPath.startsWith(uploadsDir)) {
+			return res.status(400).json({ message: "Invalid destination" });
+		}
 
 		writeFileSync(uploadPath, content);
 
@@ -118,7 +136,12 @@ router.get("/export-csv", (req, res) => {
 			return res.status(400).json({ message: "Only CSV files allowed" });
 		}
 
-		const csvPath = join("./data", dataFile);
+		const dataDir = "./data";
+		const csvPath = join(dataDir, dataFile);
+
+		if (!csvPath.startsWith(dataDir)) {
+			return res.status(400).json({ message: "Invalid file path" });
+		}
 
 		if (existsSync(csvPath)) {
 			const csvData = readFileSync(csvPath, 'utf8');
