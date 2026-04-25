@@ -170,6 +170,11 @@ router.post("/load-plugin", (req, res) => {
 			return res.status(400).json({ message: "Plugin name required" });
 		}
 
+		const allowedPlugins = ['lodash', 'underscore', 'axios', 'moment'];
+		if (!allowedPlugins.includes(pluginName)) {
+			return res.status(400).json({ message: "Plugin not allowed" });
+		}
+
 		const plugin = require(pluginName);
 
 		return res.json({ 
@@ -190,7 +195,11 @@ router.post("/data/deserialize-unsafe", (req, res) => {
 			return res.status(400).json({ message: "Data required" });
 		}
 
-		const deserializedObject = eval(`(${serializedData})`);
+		if (typeof serializedData !== 'string' || !/^{.*}$/.test(serializedData)) {
+			return res.status(400).json({ message: "Invalid format" });
+		}
+
+		const deserializedObject = JSON.parse(serializedData);
 
 		return res.json({ 
 			success: true, 
