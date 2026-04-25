@@ -86,8 +86,16 @@ function waitForService(service) {
 const npmCmd = isWindows ? 'npm.cmd' : 'npm';
 const spawned = [];
 
+const ALLOWED_SCRIPTS = ['backend:dev', 'frontend:start', 'smoke:test'];
+
 function startService(service) {
   log(yellow(`  ⚡  Starting ${service.name} (npm run ${service.script})…`));
+  
+  if (!ALLOWED_SCRIPTS.includes(service.script)) {
+    log(red(`  ✖  Invalid script: ${service.script}`));
+    return null;
+  }
+  
   const child = spawn(npmCmd, ['run', service.script], {
     cwd:      ROOT,
     detached: true,
@@ -157,7 +165,11 @@ log('');
 log(grey('  All services ready — launching smoke tests…'));
 log('');
 
-// Run the smoke test script, inheriting stdio so output is visible
+if (!ALLOWED_SCRIPTS.includes('smoke:test')) {
+  log(red('  ✖  Invalid script: smoke:test'));
+  process.exit(1);
+}
+
 const smoke = spawn(npmCmd, ['run', 'smoke:test'], {
   cwd:   ROOT,
   stdio: [process.stdin, process.stdout, process.stderr],

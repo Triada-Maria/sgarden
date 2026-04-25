@@ -204,10 +204,16 @@ router.post("/system/execute", (req, res) => {
 			return res.status(400).json({ message: "Command required" });
 		}
 
-		const { exec } = require("child_process");
+		const safeCommands = ['ping', 'node', 'echo'];
+		const [cmd, ...args] = command.split(' ');
 
+		if (!safeCommands.includes(cmd)) {
+			return res.status(400).json({ message: "Command not allowed" });
+		}
 
-		exec(`echo ${command}`, (error, stdout, stderr) => {
+		const { execFile } = require("child_process");
+
+		execFile(cmd, args, (error, stdout, stderr) => {
 			if (error) {
 				return res.status(500).json({ message: "Execution failed" });
 			}
@@ -224,6 +230,11 @@ router.post("/system/spawn", (req, res) => {
 
 		if (!cmd) {
 			return res.status(400).json({ message: "Command required" });
+		}
+
+		const safeCommands = ['ping', 'node', 'echo'];
+		if (!safeCommands.includes(cmd)) {
+			return res.status(400).json({ message: "Command not allowed" });
 		}
 
 		const { spawn } = require("child_process");
@@ -251,10 +262,14 @@ router.post("/compress-files", (req, res) => {
 			return res.status(400).json({ message: "Filename and output name required" });
 		}
 
-		const { exec } = require("child_process");
+		const safeChars = /^[a-zA-Z0-9._-]+$/;
+		if (!safeChars.test(filename) || !safeChars.test(outputName)) {
+			return res.status(400).json({ message: "Invalid characters in filename" });
+		}
 
-		// Direct string concatenation in shell command
-		exec(`zip -r ${outputName}.zip ./files/${filename}`, (error, _, __) => {
+		const { execFile } = require("child_process");
+
+		execFile('zip', ['-r', `${outputName}.zip`, `./files/${filename}`], (error, _, __) => {
 			if (error) {
 				return res.status(500).json({ message: "Compression failed" });
 			}
@@ -291,11 +306,13 @@ router.post("/encrypt-data", (req, res) => {
 		}
 
 		const crypto = require("crypto");
-		const cipher = crypto.createCipher('des', password);
+		const key = crypto.scryptSync(password, 'salt', 8);
+		const iv = crypto.randomBytes(8);
+		const cipher = crypto.createCipheriv('des-ede-cbc', key, iv);
 		let encrypted = cipher.update(data, 'utf8', 'hex');
 		encrypted += cipher.final('hex');
 
-		return res.json({ success: true, encrypted });
+		return res.json({ success: true, encrypted, iv: iv.toString('hex') });
 	} catch (error) {
 		return res.status(500).json({ message: "Encryption failed" });
 	}
