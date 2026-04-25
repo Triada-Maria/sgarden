@@ -50,7 +50,7 @@ function write(line = '') {
   process.stdout.write(line + '\n');
 }
 
-function startProgressTicker(label, intervalMs = 10000) {
+function startProgressTicker(label) {
   const startedAt = Date.now();
   let lastRenderedLength = 0;
 
